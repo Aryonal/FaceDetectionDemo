@@ -47,7 +47,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 case PROCESSOVER: {
                     //close dialog ad
                     Log.d("MainActivity","got msg 1");
-                    ad.hide();
+                    ad.dismiss();
 
                     AlertDialog.Builder imageDialog = new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, R.style.DialogTheme));
                     imageDialog.setView(R.layout.dialog_image)
@@ -164,15 +164,39 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     public void onPause(){
-        if(mCamera!=null) mCamera.release();
+        Log.d("MainActivity","Activity onPause");
         super.onPause();
+        if(mCamera!=null) {
+            mCamera.release();
+            mCamera = null;
+        }
+
     }
 
+    @Override
+    public void onStart(){
+        super.onStart();
+        Log.d("MainActivity","Activity onStart");
+    }
 
     @Override
     public void onResume(){
+        Log.d("MainActivity","Activity onResume");
         super.onResume();
-        if(mCamera!=null) mCamera.startPreview();
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        //mCamera = null;
+        Log.d("MainActivity","Activity onStop");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d("MainActivity", "Activity onDestroy");
+
     }
 
     public void SetBMP(Bitmap bmp){
