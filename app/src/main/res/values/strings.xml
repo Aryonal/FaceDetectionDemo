@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">HomeWork2</string>
+
+    <string name="bottom_button">Take Photo</string>
+    <string name="top_button">Go To PreView</string>
+    <string name="mask_button">add mask</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+</resources>

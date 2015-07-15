@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:background="#3F51B5"
+    tools:context=".MainActivity">
+
+    <TextureView
+        android:layout_height="480dp"
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/textureview"/>
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@id/textureview"
+        android:id="@+id/button"
+        android:background="#3F51B5"
+        android:text="@string/bottom_button"
+        android:textSize="30dp"
+        android:textColor="#FFFFFF"/>
+
+</RelativeLayout>
