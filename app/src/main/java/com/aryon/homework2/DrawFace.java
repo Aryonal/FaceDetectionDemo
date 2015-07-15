@@ -69,11 +69,13 @@ public class DrawFace extends Thread implements Runnable {
         FaceDetector.Face fs;
         for(int i = 0; i < FaceNumber; i++){
             fs = faces[i];
-            fs.getMidPoint(point);
-            float dis = fs.eyesDistance();
-            canvas.drawCircle(point.x-dis/2,point.y,dis/3,paint);
-            canvas.drawCircle(point.x+dis/2,point.y,dis/3,paint);
-            canvas.drawLine(point.x-dis/6,point.y,point.x+dis/6,point.y,paint);
+            if(fs.confidence()>0.4) {
+                fs.getMidPoint(point);
+                float dis = fs.eyesDistance();
+                canvas.drawCircle(point.x - dis / 2, point.y, dis / 3, paint);
+                canvas.drawCircle(point.x + dis / 2, point.y, dis / 3, paint);
+                canvas.drawLine(point.x - dis / 6, point.y, point.x + dis / 6, point.y, paint);
+            }
         }
 
         mainActivity.SetBMP(bmp);

@@ -113,6 +113,19 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         });
     }
 
+    @Override
+    public void onPause(){
+        if(mCamera!=null) mCamera.release();
+        super.onPause();
+    }
+
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(mCamera!=null) mCamera.startPreview();
+    }
+
     public void SetBMP(Bitmap bmp){
         this.READYTOSHOW = bmp;
     }
@@ -168,8 +181,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     size.width = sz.width;
                     //break;
                 }
-            }*/
-            Log.d("MainActivity","CameraParametersSetting,Size:"+width+"*"+height+"\n        PreViewSize:"+size.width+"*"+size.height);
+            }
+            Log.d("MainActivity","CameraParametersSetting,Size:"+width+"*"+height+"\n        PreViewSize:"+size.width+"*"+size.height);*/
 
             parameters.setPreviewSize(1600,1200);
             parameters.setPictureSize(1280,960);
@@ -199,7 +212,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        mCamera.release();
+        if(mCamera!=null) mCamera.release();
         return true;
     }
 
