@@ -13,8 +13,13 @@ import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.TextureView;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -25,6 +30,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     Camera mCamera = null;
     AlertDialog.Builder dialog;
     AlertDialog ad = null;
+
+    private int SHOOTOVER = 0;
 
     public int FaceNumber = 0;
     public Bitmap READYTOSHOW = null;
@@ -82,14 +89,53 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.front_page);
+        //delay 1s
+        final TextView front = (TextView)findViewById(R.id.front_text);
+        final AnimationSet animset = new AnimationSet(true);
+        final Animation translateAnimation = new TranslateAnimation(0,0,0,1180);
+        final Animation scaleAnimation = new ScaleAnimation(1,0.62f,1,0.62f,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        translateAnimation.setDuration(1000);
+        scaleAnimation.setDuration(1000);
+        animset.addAnimation(translateAnimation);
+        animset.addAnimation(scaleAnimation);
+
+//
+        animset.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+//OnCreate
+            createView();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                front.startAnimation(animset);
+            }
+        }, 1000/* 1sec delay */);
+    }
+
+    public void createView(){
         setContentView(R.layout.activity_main);
 
         bn = (Button)findViewById(R.id.button);
         txv = (TextureView)findViewById(R.id.textureview);
 
-        dialog = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DialogTheme));
+        dialog = new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, R.style.DialogTheme));
 
-        txv.setSurfaceTextureListener(this);
+        txv.setSurfaceTextureListener(MainActivity.this);
         bn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,11 +144,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     bn.setText(R.string.mask_button);
                 }
                 else if(bn.getText().equals("add mask")){
-                    bn.setText(R.string.top_button);
-                    ad = dialog.setView(R.layout.dialog_view).create();
-                    ad.show();
-                //start processing
-                    drawFace.start();
+                    if(drawFace!=null && SHOOTOVER == 1) {
+                        SHOOTOVER = 0;
+                        bn.setText(R.string.top_button);
+                        ad = dialog.setView(R.layout.dialog_view).create();
+                        ad.show();
+                        //start processing
+                        drawFace.start();
+                    }
                 }else if(bn.getText().equals("Go To PreView")){
                     bn.setText(R.string.bottom_button);
                     if(mCamera != null)
@@ -132,7 +181,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     public void ShootAndDraw() {
         //
-        Toast.makeText(MainActivity.this,"Surprise!!",Toast.LENGTH_SHORT).show();
         if(mCamera!=null){
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                 @Override
@@ -142,7 +190,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                             new Camera.PictureCallback() {
                                 @Override
                                 public void onPictureTaken(byte[] data, Camera camera) {
+                                    Toast.makeText(MainActivity.this,"Surprise!!",Toast.LENGTH_SHORT).show();
                                     drawFace = new DrawFace(MainActivity.this, data, 10);
+                                    SHOOTOVER = 1;
                                 }
                             });
                     else 
