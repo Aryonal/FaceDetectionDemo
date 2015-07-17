@@ -59,6 +59,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                                })
                                .setTitle(FaceNumber<2?FaceNumber+" Face Found in BMP":FaceNumber+" Faces found in BMP");
                     AlertDialog imagedialog = imageDialog.create();
+                    imagedialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
                     imagedialog.show();
                     ImageView iv = (ImageView)imagedialog.findViewById(R.id.dialog_image);
                     Log.d("MainActivity",iv==null?"iv is null":"iv is not null");
@@ -93,8 +94,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         //delay 1s
         final TextView front = (TextView)findViewById(R.id.front_text);
         final AnimationSet animset = new AnimationSet(true);
-        final Animation translateAnimation = new TranslateAnimation(0,0,0,1180);
-        final Animation scaleAnimation = new ScaleAnimation(1,0.62f,1,0.62f,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        final Animation translateAnimation = new TranslateAnimation(0,0,0,1191);
+        final Animation scaleAnimation = new ScaleAnimation(1,0.606f,1,0.606f,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
         translateAnimation.setDuration(1000);
         scaleAnimation.setDuration(1000);
         animset.addAnimation(translateAnimation);
@@ -219,8 +220,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                                     SHOOTOVER = 1;
                                 }
                             });
-                    else 
-                        Toast.makeText(MainActivity.this,"Focus Error",Toast.LENGTH_SHORT).show();
+                    else {
+                        Toast.makeText(MainActivity.this, "Focus Error", Toast.LENGTH_SHORT).show();
+                        bn.setText(R.string.bottom_button);
+                    }
                 }
             });
         }
