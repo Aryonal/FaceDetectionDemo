@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -11,6 +15,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
+import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.view.animation.Animation;
@@ -23,13 +28,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity implements TextureView.SurfaceTextureListener {
     Button bn;
     TextureView txv;
+    ImageView fcv;
     Camera mCamera = null;
     AlertDialog.Builder dialog;
     AlertDialog ad = null;
+
+    Bitmap blankBMP;
+    float x;
+    float y;
 
     private int SHOOTOVER = 0;
 
@@ -133,10 +144,18 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         bn = (Button)findViewById(R.id.button);
         txv = (TextureView)findViewById(R.id.textureview);
+        fcv = (ImageView)findViewById(R.id.focusview);
 
         dialog = new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, R.style.DialogTheme));
 
         txv.setSurfaceTextureListener(MainActivity.this);
+        fcv.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                FocusOnArea(event);
+                return false;
+            }
+        });
         bn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -174,44 +193,75 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     }
 
-    @Override
-    public void onStart(){
-        super.onStart();
-        Log.d("MainActivity","Activity onStart");
-    }
-
-    @Override
-    public void onResume(){
-        Log.d("MainActivity","Activity onResume");
-        super.onResume();
-    }
-
-    @Override
-    public void onStop(){
-        super.onStop();
-        //mCamera = null;
-        Log.d("MainActivity","Activity onStop");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d("MainActivity", "Activity onDestroy");
-
-    }
-
     public void SetBMP(Bitmap bmp){
         this.READYTOSHOW = bmp;
+    }
+
+    public void FocusOnArea(MotionEvent event){
+        //
+        x = event.getX();
+        y = event.getY();
+        Log.d("MainActivity","touch area:"+x+"*"+y);
+        if(mCamera != null){
+            Camera.Parameters parameters = mCamera.getParameters();
+            try{
+                ArrayList<Camera.Area> focusAreas = new ArrayList<Camera.Area>(1);
+                focusAreas.add(new Camera.Area(new Rect(
+                        (int)(((x-75)/txv.getWidth())*1831-915),
+                        (int)(((y-75)/txv.getHeight())*1831-915),
+                        (int)(((x+75)/txv.getWidth())*1831-915),
+                        (int)(((y+75)/txv.getHeight())*1831-915)
+                ),750));
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mCamera.cancelAutoFocus();
+                parameters.setFocusAreas(focusAreas);
+
+                mCamera.setParameters(parameters);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    Paint paint = new Paint();
+                    if(success) {
+                        Log.d("MainActivity", "Focus!");
+                        paint.setARGB(0xff,0x4c,0xaf,0x50);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(5);
+                    }
+                    else {
+                        Toast.makeText(MainActivity.this, "Focus ERROR", Toast.LENGTH_SHORT).show();
+                        paint.setARGB(0xff,0xf4,0x43,0x36);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(5);
+                    }
+                    if(blankBMP != null) blankBMP.recycle();
+                    BitmapFactory.Options opts = new BitmapFactory.Options();
+                    opts.inMutable = true;
+                    int wid = 960, hei = 1280;
+                    blankBMP = Bitmap.createBitmap(wid,hei, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(blankBMP);
+                    canvas.drawRect(new Rect((int)(x - 75)*wid/1080, (int) (y - 75)*hei/1440, (int)(x + 75)*wid/1080, (int) (y + 75)*hei/1440), paint);
+                    fcv.setImageBitmap(blankBMP);
+                    Log.d("MainActivity","Canvas should have been drawn");
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            blankBMP = Bitmap.createBitmap(120,160, Bitmap.Config.ARGB_8888);
+                            fcv.setImageBitmap(blankBMP);
+                        }
+                    },2000);
+                }
+            });
+        }
     }
 
     public void ShootAndDraw() {
         //
         if(mCamera!=null){
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    if(success)
-                        camera.takePicture(null, null, null,
+            //
+                        mCamera.takePicture(null, null, null,
                             new Camera.PictureCallback() {
                                 @Override
                                 public void onPictureTaken(byte[] data, Camera camera) {
@@ -220,12 +270,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                                     SHOOTOVER = 1;
                                 }
                             });
-                    else {
-                        Toast.makeText(MainActivity.this, "Focus Error", Toast.LENGTH_SHORT).show();
-                        bn.setText(R.string.bottom_button);
-                    }
-                }
-            });
         }
     }
 
@@ -235,7 +279,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         if(mCamera!=null){
             mCamera.release();
             mCamera = null;
-            Log.d("MainActivity","CameraReleased");
+            Log.d("MainActivity", "CameraReleased");
         }
         try{
             mCamera = Camera.open();
@@ -273,15 +317,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-        mCamera.setFaceDetectionListener(new Camera.FaceDetectionListener() {
-            @Override
-            public void onFaceDetection(Camera.Face[] faces, Camera camera) {
-                //
-                Toast.makeText(MainActivity.this,"Shoot now!",Toast.LENGTH_SHORT).show();
-                Log.d("MainActivity","Face detected!");
-            }
-        });
-
     }
 
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {

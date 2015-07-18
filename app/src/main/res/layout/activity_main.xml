@@ -11,12 +11,17 @@
         android:layout_centerHorizontal="true"
         android:id="@+id/textureview"/>
 
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="480dp"
+        android:id="@+id/focusview"/>
+
     <Button
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:layout_below="@id/textureview"
+        android:layout_below="@id/focusview"
         android:id="@+id/button"
         android:background="#3F51B5"
         android:text="@string/bottom_button"
