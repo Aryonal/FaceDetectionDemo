@@ -27,28 +27,29 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends Activity implements TextureView.SurfaceTextureListener {
-    Button bn;
-    TextureView txv;
-    ImageView fcv;
-    Camera mCamera = null;
-    AlertDialog.Builder dialog;
-    AlertDialog ad = null;
+public class MainActivity extends Activity {
+    static  String              TAG = "MainActivity";
 
-    Bitmap blankBMP;
-    float x;
-    float y;
+    public  Button              bn;
+    public  TextureView         txv;
+    public  ImageView           fcv;
+    public  Camera              mCamera = null;
+    public  AlertDialog.Builder dialog;
+    public  AlertDialog         ad = null;
 
-    private int SHOOTOVER = 0;
+    public  Bitmap              blankBMP;
+    public  float               x;
+    public  float               y;
 
-    public int FaceNumber = 0;
-    public Bitmap READYTOSHOW = null;
-    final int PROCESSOVER = 1;
-    final int NOFACEDETECTED = 2;
-    DrawFace drawFace;
+    private int                 SHOOTOVER = 0;
+
+    public int                  FaceNumber = 0;
+    public Bitmap               READYTOSHOW = null;
+    final int                   PROCESSOVER = 1;
+    final int                   NOFACEDETECTED = 2;
+    public  DrawFace            drawFace;
 
     Handler mhandler = new Handler(){
         @Override
@@ -57,7 +58,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             switch(msg.what){
                 case PROCESSOVER: {
                     //close dialog ad
-                    Log.d("MainActivity","got msg 1");
+                    Log.d(TAG,"got msg 1");
                     ad.dismiss();
 
                     AlertDialog.Builder imageDialog = new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, R.style.DialogTheme));
@@ -73,7 +74,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     imagedialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
                     imagedialog.show();
                     ImageView iv = (ImageView)imagedialog.findViewById(R.id.dialog_image);
-                    Log.d("MainActivity",iv==null?"iv is null":"iv is not null");
+                    Log.d(TAG,iv==null?"iv is null":"iv is not null");
 
                     iv.setImageBitmap(READYTOSHOW);
 
@@ -89,7 +90,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     break;
                 }
                 case NOFACEDETECTED: {
-                    Log.d("MainActivity","got face:"+0);
+                    Log.d(TAG,"got face:"+0);
                     Toast.makeText(MainActivity.this,"Oops! No face caught",Toast.LENGTH_SHORT).show();
                     break;
                 }
@@ -148,7 +149,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         dialog = new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, R.style.DialogTheme));
 
-        txv.setSurfaceTextureListener(MainActivity.this);
+        txv.setSurfaceTextureListener(new TextureListner(this,mCamera));
         fcv.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -184,7 +185,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     public void onPause(){
-        Log.d("MainActivity","Activity onPause");
+        Log.d(TAG,"Activity onPause");
         super.onPause();
         if(mCamera!=null) {
             mCamera.release();
@@ -198,10 +199,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     public void FocusOnArea(MotionEvent event){
-        //
         x = event.getX();
         y = event.getY();
-        Log.d("MainActivity","touch area:"+x+"*"+y);
+        Log.d(TAG,"touch area:"+x+"*"+y);
+        Paint paint = new Paint();
+        paint.setARGB(0x99, 0x3f, 0x51, 0xb5);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(10);
+        DrawRect(paint, true);
+
         if(mCamera != null){
             Camera.Parameters parameters = mCamera.getParameters();
             try{
@@ -223,37 +229,80 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                 @Override
                 public void onAutoFocus(boolean success, Camera camera) {
-                    Paint paint = new Paint();
                     if(success) {
-                        Log.d("MainActivity", "Focus!");
+                        Log.d(TAG, "Focus!");
+                        Paint paint = new Paint();
                         paint.setARGB(0xff,0x4c,0xaf,0x50);
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setStrokeWidth(5);
+                        DrawRect(paint,false);
                     }
                     else {
                         Toast.makeText(MainActivity.this, "Focus ERROR", Toast.LENGTH_SHORT).show();
+                        Paint paint = new Paint();
                         paint.setARGB(0xff,0xf4,0x43,0x36);
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setStrokeWidth(5);
+                        DrawRect(paint,false);
                     }
-                    if(blankBMP != null) blankBMP.recycle();
-                    BitmapFactory.Options opts = new BitmapFactory.Options();
-                    opts.inMutable = true;
-                    int wid = 960, hei = 1280;
-                    blankBMP = Bitmap.createBitmap(wid,hei, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(blankBMP);
-                    canvas.drawRect(new Rect((int)(x - 75)*wid/1080, (int) (y - 75)*hei/1440, (int)(x + 75)*wid/1080, (int) (y + 75)*hei/1440), paint);
-                    fcv.setImageBitmap(blankBMP);
-                    Log.d("MainActivity","Canvas should have been drawn");
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            blankBMP = Bitmap.createBitmap(120,160, Bitmap.Config.ARGB_8888);
-                            fcv.setImageBitmap(blankBMP);
-                        }
-                    },2000);
                 }
             });
+        }
+    }
+
+    public void DrawRect(final Paint paint, Boolean isAnim){
+        final Paint paint1 = paint;
+        final int wid = 960, hei = 1280;
+        if(isAnim) {
+            if (blankBMP != null) blankBMP.recycle();
+            blankBMP = Bitmap.createBitmap(wid, hei, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(blankBMP);
+            canvas.drawRect(new Rect((int) (x - 150) * wid / 1080, (int) (y - 150) * hei / 1440, (int) (x + 150) * wid / 1080, (int) (y + 150) * hei / 1440), paint);
+            fcv.setImageBitmap(blankBMP);
+
+            //focus rect animation and hide
+            final ScaleAnimation anim = new ScaleAnimation(1, 0.5f, 1, 0.5f, Animation.RELATIVE_TO_SELF, x / 1080, Animation.RELATIVE_TO_SELF, y / 1440);
+            anim.setDuration(500);
+            anim.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    blankBMP = Bitmap.createBitmap(wid, hei, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(blankBMP);
+                    paint1.setStrokeWidth(paint1.getStrokeWidth()/2);
+                    canvas.drawRect(new Rect((int) (x - 75) * wid / 1080, (int) (y - 75) * hei / 1440, (int) (x + 75) * wid / 1080, (int) (y + 75) * hei / 1440), paint1);
+                    fcv.setImageBitmap(blankBMP);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+            Log.d(TAG, "Canvas should have been drawn");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    fcv.startAnimation(anim);
+                }
+            }, 0);
+        }else{
+            //
+            blankBMP = Bitmap.createBitmap(wid, hei, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(blankBMP);
+            canvas.drawRect(new Rect((int) (x - 75) * wid / 1080, (int) (y - 75) * hei / 1440, (int) (x + 75) * wid / 1080, (int) (y + 75) * hei / 1440), paint1);
+            fcv.setImageBitmap(blankBMP);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    blankBMP = Bitmap.createBitmap(wid, hei, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(blankBMP);
+                    //canvas.drawRect(new Rect((int) (x - 75) * wid / 1080, (int) (y - 75) * hei / 1440, (int) (x + 75) * wid / 1080, (int) (y + 75) * hei / 1440), paint1);
+                    fcv.setImageBitmap(blankBMP);
+                }
+            }, 500);
         }
     }
 
@@ -272,65 +321,5 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                             });
         }
     }
-
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        Log.d("MainActivity","TextureAvailable");
-
-        if(mCamera!=null){
-            mCamera.release();
-            mCamera = null;
-            Log.d("MainActivity", "CameraReleased");
-        }
-        try{
-            mCamera = Camera.open();
-            mCamera.setDisplayOrientation(90);
-        }catch (Exception e){
-            e.printStackTrace();
-            Log.d("MainActivity","CameraOpenFailed");
-        }
-        Log.d("MainActivity","SettingCameraParameters");
-
-        try {
-            Camera.Parameters parameters = mCamera.getParameters();
-            Camera.Size size = parameters.getPreviewSize();
-/*
-            List<Camera.Size> localSize = parameters.getSupportedPreviewSizes();
-            for(Camera.Size sz : localSize){
-                Log.d("MainActivity","    SupportedPreviewSize:"+sz.width+"*"+sz.height);
-                if (sz.width/sz.height == 4/3 || sz.width/sz.height == 3/4) {
-                    size.height = sz.height;
-                    size.width = sz.width;
-                    //break;
-                }
-            }
-            Log.d("MainActivity","CameraParametersSetting,Size:"+width+"*"+height+"\n        PreViewSize:"+size.width+"*"+size.height);*/
-
-            parameters.setPreviewSize(1600,1200);
-            parameters.setPictureSize(1280,960);
-            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            parameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
-            parameters.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
-
-            mCamera.setParameters(parameters);
-            mCamera.setPreviewTexture(surface);
-            mCamera.startPreview();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.d("MainActivity","TextureViewSizeChanged");
-    }
-
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        if(mCamera!=null) mCamera.release();
-        return true;
-    }
-
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-    }
-
 
 }

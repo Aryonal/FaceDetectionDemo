@@ -13,9 +13,10 @@ import android.util.Log;
  * Created by Aryon on 2015/7/14.
  */
 public class DrawFace extends Thread implements Runnable {
-    MainActivity mainActivity;
-    byte[] img;
-    int number;
+    static String           TAG = "DrawFace";
+    private  MainActivity   mainActivity;
+    public  byte[]          img;
+    private int             number;
 
     public DrawFace(MainActivity ac, byte[] data, int number){
         //
@@ -32,7 +33,7 @@ public class DrawFace extends Thread implements Runnable {
         //
         Bitmap getbmp = BitmapFactory.decodeByteArray(data,0,data.length);
 
-        Log.d("DrawFace", "FaceDetection working");
+        Log.d(TAG, "FaceDetection working");
         Bitmap tempbmp;
         tempbmp = getbmp.copy(Bitmap.Config.RGB_565, true);//change into RGB565 format
         getbmp.recycle();
@@ -49,12 +50,12 @@ public class DrawFace extends Thread implements Runnable {
         FaceDetector fd = new FaceDetector(bmp.getWidth(),bmp.getHeight(),number);
         try {
             FaceNumber = fd.findFaces(bmp, faces);
-            Log.d("MainActivity","FaceDetection findFaces over");
+            Log.d(TAG,"FaceDetection findFaces over");
         }catch(IllegalArgumentException e){
             e.printStackTrace();
         }
 
-        Log.d("MainActivity","got face:"+FaceNumber);
+        Log.d(TAG,"got face:"+FaceNumber);
         if(FaceNumber == 0)
             mainActivity.mhandler.sendEmptyMessage(mainActivity.NOFACEDETECTED);
         mainActivity.FaceNumber = FaceNumber;
